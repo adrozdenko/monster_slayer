@@ -34,7 +34,30 @@
         </section>
         <section id="log" class="container">
           <h2>Battle Log</h2>
-          <ul></ul>
+          <ul>
+            <li v-for="item in logMessages" :key="item.actionValue">
+              <span
+                :class="{
+                  'log--player': item.actionBy === 'player',
+                  'log--monster': item.actionBy === 'monster',
+                }"
+              >
+                {{ item.actionBy === "player" ? "Player" : "Monster" }}</span
+              >
+              <span v-if="item.actionType === 'heal'">
+                heals himself for
+                <span class="log--heal"> {{ item.actionValue }}</span></span
+              >
+              <span v-if="item.actionType === 'special attack'">
+                uses special attack and deals
+                <span class="log--damage">{{ item.actionValue }}</span>
+              </span>
+              <span v-else>
+                attacks and deals
+                <span class="log--damage">{{ item.actionValue }}</span>
+              </span>
+            </li>
+          </ul>
         </section>
       </div>
     </body>
@@ -51,6 +74,7 @@ export default {
       monsterHealth: 100,
       playerHealth: 100,
       winner: null,
+      logMessages: [],
     };
   },
   computed: {
@@ -73,21 +97,17 @@ export default {
   watch: {
     playerHealth(value) {
       if (value <= 0 && this.monsterHealth <= 0) {
-        // A draw
         this.winner = "draw";
       }
       if (value <= 0) {
-        //Player lost
         this.winner = "monster";
       }
     },
     monsterHealth(value) {
       if (value <= 0 && this.playerHealth <= 0) {
-        // draw
         this.winner = "draw";
       }
       if (value <= 0) {
-        // Monster lost
         this.winner = "player";
       }
     },
@@ -98,20 +118,24 @@ export default {
       this.monsterHealth = 100;
       this.playerHealth = 100;
       this.winner = null;
+      this.logMessages = [];
     },
     attackMonster() {
       const attackValue = getRandomInt(5, 12);
       this.monsterHealth -= attackValue;
+      this.addLogMessage("player", "attack", attackValue);
       this.attackPlayer();
       this.rounds++;
     },
     attackPlayer() {
       const attackValue = getRandomInt(8, 15);
       this.playerHealth -= attackValue;
+      this.addLogMessage("monster", "attack", attackValue);
     },
     specialAttackMonster() {
       const attackValue = getRandomInt(10, 25);
       this.monsterHealth -= attackValue;
+      this.addLogMessage("player", "special attack", attackValue);
       this.attackPlayer();
       this.rounds++;
     },
@@ -122,11 +146,19 @@ export default {
       } else {
         this.playerHealth += healValue;
       }
+      this.addLogMessage("player", "heal", healValue);
       this.attackPlayer();
       this.rounds++;
     },
     surrender() {
       this.winner = "monster";
+    },
+    addLogMessage(who, what, value) {
+      this.logMessages.unshift({
+        actionBy: who,
+        actionType: what,
+        actionValue: value,
+      });
     },
   },
 };
